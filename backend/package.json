@@ -2,10 +2,13 @@
   "name": "backend",
   "version": "1.0.0",
   "description": "",
-  "main": "inde.js",
+  "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
+  "start": "node server.js",
+  "dev": "nodemon server.js",
+  "create-tables": "node models/createTables.js",
+  "test-db": "node config/pgtest.js"
+},
   "keywords": [],
   "author": "",
   "license": "ISC",

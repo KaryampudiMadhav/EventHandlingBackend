@@ -17,7 +17,8 @@ const createTables = async () => {
     date_time TIMESTAMP NOT NULL,
     location VARCHAR(100) NOT NULL,
     capacity INTEGER CHECK (capacity > 0 AND capacity <= 1000),
-    registration_deadline TIMESTAMP NOT NULL
+    registration_deadline TIMESTAMP NOT NULL,
+    
   );
 `);
 
