@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { cancelRegistration, createEvent, getEventDetails, registerEvents, upcommingEvents } from './../controller/event.controller.js';
+import { cancelRegistration, createEvent, getEventDetails, getEventStats, registerEvents, upcommingEvents } from './../controller/event.controller.js';
 
 export const routes  = Router()
 
@@ -8,3 +8,4 @@ routes.post("/register-event",registerEvents);
 routes.get("/get-events",upcommingEvents);
 routes.delete("/cancel-event/:email/:eventId",cancelRegistration);
 routes.get("/get-event-details",getEventDetails)
+routes.get("/get-event-stats",getEventStats)

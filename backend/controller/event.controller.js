@@ -43,7 +43,6 @@ export const createEvent = async(req,res)=>{
         res.status(501).json({error : "Internal Server Error."});
     }
 }
-
 export const registerEvents = async(req,res)=>{
     const {id : eventId,name,email} = req.body;
 
@@ -107,7 +106,6 @@ export const registerEvents = async(req,res)=>{
         res.status(501).json({error : "Internal Server Error."});
     }
 }
-
 export const upcommingEvents = async(req,res)=>{
     try {
       const upcommingEvents = await Db.query(
@@ -124,7 +122,6 @@ export const upcommingEvents = async(req,res)=>{
       res.status(501).json({error : "Internal Server Error."});
     }
 }
-
 export const cancelRegistration = async(req,res) =>{
    const {email,eventId } = req.params;
 
@@ -186,5 +183,34 @@ export const getEventDetails = async (req, res) => {
        res.status(500).json({ error: "Internal Server Error" });
      }
 }
+export const getEventStats = async (req, res) => {
+  try {
+    const eventsRes = await Db.query("SELECT * FROM events");
+    const stats = [];
 
+    for (const event of eventsRes.rows) {
+      const { id, title, capacity } = event;
+      const regRes = await Db.query(
+        "SELECT COUNT(*) FROM registrations WHERE event_id = $1",
+        [id]
+      );
 
+      const total = parseInt(regRes.rows[0].count);
+      const remaining = capacity - total;
+      const percentage = ((total / capacity) * 100).toFixed(2);
+
+      stats.push({
+        id,
+        title,
+        capacity,
+        total_registrations: total,
+        remaining_capacity: remaining,
+        percentage_used: `${percentage}%`,
+      });
+    }
+    res.status(200).json(stats);
+  } catch (error) {
+    console.error("Error getting event stats:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
