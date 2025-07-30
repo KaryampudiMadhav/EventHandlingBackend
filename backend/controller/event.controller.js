@@ -20,6 +20,7 @@ export const createEvent = async(req,res)=>{
         if (checkEvent.rows.length > 0) {
           return res.status(400).json({ error: "Event with this name is exists change name of the event." });
         }
+
         const deadlineTime = new Date(registration_deadline);
         const eventTime = new Date(date_time);
 
@@ -123,3 +124,67 @@ export const upcommingEvents = async(req,res)=>{
       res.status(501).json({error : "Internal Server Error."});
     }
 }
+
+export const cancelRegistration = async(req,res) =>{
+   const {email,eventId } = req.params;
+
+   if(!email || !eventId){
+    return res.status(400).json({error : "Please Provide the Ids."});
+   }
+
+   try{
+
+    const isUserPresent = await Db.query(`SELECT * FROM users WHERE email = $1`,[email]);
+
+    if(isUserPresent.rows.length === 0){
+      return res.status(400).json({ error: "User is not present." });
+    }
+
+    const userId = isUserPresent.rows[0].id;
+
+    const isUserRegsistered = await Db.query(
+      `SELECT * FROM registrations WHERE user_id = $1 and event_id = $2`,
+      [userId,eventId]
+    );
+
+    if(isUserRegsistered.rows.length === 0){
+      return res.status(400).json({ error: "User is not registered fo this event" });
+    }
+    
+    await Db.query(`DELETE FROM registrations  WHERE user_id = $1 and event_id = $2`,[userId,eventId]);
+
+    res.status(200).json({ message: "Event is canclled." });
+   }catch(error){
+    console.log(error);
+    res.status(501).json({error : "Internal Server Error ."});
+   }
+}
+export const getEventDetails = async (req, res) => {
+     try {
+       const eventsRes = await Db.query("SELECT * FROM events");
+
+       const events = [];
+
+       for (const event of eventsRes.rows) {
+         const registrationsRes = await Db.query(
+           `SELECT users.id, users.name, users.email
+         FROM registrations
+         JOIN users ON registrations.user_id = users.id
+         WHERE registrations.event_id = $1`,
+           [event.id]
+         );
+
+         events.push({
+           ...event,
+           registrations: registrationsRes.rows,
+         });
+       }
+
+       res.status(200).json(events);
+     } catch (error) {
+       console.error("Error fetching event details:", error);
+       res.status(500).json({ error: "Internal Server Error" });
+     }
+}
+
+
