@@ -18,7 +18,7 @@ export const createEvent = async(req,res)=>{
        );
       
         if (checkEvent.rows.length > 0) {
-          return res.status(400).json({ error: "Event already exists." });
+          return res.status(400).json({ error: "Event with this name is exists change name of the event." });
         }
         const deadlineTime = new Date(registration_deadline);
         const eventTime = new Date(date_time);
@@ -40,5 +40,86 @@ export const createEvent = async(req,res)=>{
     } catch (error) {
         console.log(error)
         res.status(501).json({error : "Internal Server Error."});
+    }
+}
+
+export const registerEvents = async(req,res)=>{
+    const {id : eventId,name,email} = req.body;
+
+    if(!eventId){
+        return res.status(400).json({error : "Please select the Event."});
+    }
+    try {
+        
+        const isEventPresent = await Db.query(
+          `SELECT * FROM events WHERE id = $1`,
+          [eventId]
+        );
+
+        if(isEventPresent.rows.length === 0){
+            return res.status(400).json({error : "The Event is not present or Expired."});
+        }
+        const deadline = new Date(isEventPresent.rows[0].registration_deadline);
+        if(deadline < new Date()){
+            return res
+              .status(400)
+              .json({ error: "The Event is Expired." });
+        }
+        
+        const isUserPresent = await Db.query(`SELECT * FROM users WHERE email = $1`,[email]);
+   
+        let userId;
+
+        if(isUserPresent.rows.length === 0){
+            
+         const insertingUser = await Db.query(
+              `INSERT INTO users(name,email) values ($1,$2) 
+            RETURNING *`,
+              [name,email]
+         );
+         userId = insertingUser.rows[0].id;
+        }else{
+            userId = isUserPresent.rows[0].id;
+        }
+
+        const isUserRegsistered = await Db.query(`SELECT * FROM registrations where user_id = $1 and event_id = $2`,[userId,eventId]);
+
+        if(isUserRegsistered.rows.length > 0){
+            return res.status(400).json({error : "You already rsegistered."});
+        }
+
+        const totalRegistrations  = await Db.query(`SELECT COUNT(*) FROM registrations where event_id = $1`,[eventId]);
+
+        const count = parseInt(totalRegistrations.rows[0].count);
+        if (count >= isEventPresent.rows[0].capacity) {
+          return res.status(400).json({ error: "Event is full." });
+        }
+
+        await Db.query(
+          `INSERT INTO registrations (user_id, event_id) VALUES ($1, $2)`,
+          [userId, eventId]
+        );
+
+        res.status(201).json({message : "Registration is Successfull."});
+    } catch (error) {
+        console.log(error);
+        res.status(501).json({error : "Internal Server Error."});
+    }
+}
+
+export const upcommingEvents = async(req,res)=>{
+    try {
+      const upcommingEvents = await Db.query(
+        `SELECT * FROM events ORDER BY registration_deadline ASC, location ASC`
+      );
+
+      if(upcommingEvents.rows.length === 0){
+        return res.status(400).json({error : "No upcomming Events ."});
+      }
+
+      res.status(200).json({events :upcommingEvents.rows})
+    } catch (error) {
+      console.log(error)
+      res.status(501).json({error : "Internal Server Error."});
     }
 }
