@@ -1,7 +1,7 @@
 Event Management API
 
 This is a Node.js + PostgreSQL backend application for managing events and user registrations.  
-Built as part of an internship assignment, the API allows event creation, user registration, cancellation, statistics, and more — all with proper validation and error handling.
+This API allows event creation, user registration, cancellation, statistics, and more — all with proper validation and error handling.
 Tech Stack
 **Backend**: Node.js, Express.js
 **Database**: PostgreSQL
